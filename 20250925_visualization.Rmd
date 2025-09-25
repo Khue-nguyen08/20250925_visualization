@@ -1,0 +1,199 @@
+---
+title: "Viz 1"
+output: github_document
+---
+
+```{r setup , include = FALSE}
+library(tidyverse)
+library(ggridges)
+devtools::install_github("p8105/p8105.datasets")
+
+library(p8105.datasets)
+#library(readxl)
+#library(haven)
+```
+
+```{r}
+library(p8105.datasets)
+data("weather_df")
+```
+
+```{r}
+ggp_weather_scatterplot = 
+  weather_df |>
+ggplot( aes(x = tmin, y = tmax)) + 
+  geom_point()
+ggp_weather_scatterplot
+```
+
+```{r}
+weather_df |>
+  filter(is.na(tmax))
+```
+## Fancier scatterplots
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth( se = FALSE) # se to not show the standard error
+```
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name), alpha = 0.3, size = 0.6) +
+  geom_smooth( se = FALSE) # se to not show the standard error
+
+
+```
+
+Adding the size inside the aes usign the precipitation data
+
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name, size = prcp), alpha = 0.3) +
+  geom_smooth( se = FALSE) # 
+```
+ Use facetting real quick
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name), alpha = 0.3, size = 0.8) +
+  geom_smooth( se = FALSE) + # se to not show the standard error
+  #facet_grid(. ~ name) # name by columns
+  facet_grid(name ~.) # name by row, nothing in column but three rows
+
+```
+ Let's make it more fun
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(aes(size = prcp), alpha = 0.3) +
+  geom_smooth( se = FALSE) +
+  facet_grid(.~ name )
+```
+ Add shape = name
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name, shape = name)) +
+  geom_point(aes(size = prcp), alpha = 0.3) +
+  geom_smooth( se = FALSE) +
+  facet_grid(.~ name )
+```
+ Learning assessment
+```{r}
+weather_df |>
+  filter (name == "CentralPark_NY") |>
+  mutate (
+    tmax_fahr = tmax * (9/5) + 32,
+    tmin_fahr = tmin * (9/5) *32
+  ) |>
+  ggplot(aes(x = tmin_fahr, y = tmax_fahr)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(se = FALSE, method = "lm" )
+  
+```
+
+## Small things
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name, shape = name)) +
+  #geom_point(alpha = 0.3) +
+  geom_smooth( se = FALSE) 
+  #facet_grid(.~ name )
+
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name, shape = name)) +
+  
+  geom_smooth( se = FALSE) +
+  geom_point(alpha = 0.3) 
+
+# Using a different geom
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_hex()
+# Setting different color
+ weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(alpha = 0.3, color = "purple")
+```
+
+# Univariate plots
+```{r}
+weather_df |>
+   ggplot(aes( x= tmin)) +
+  geom_histogram(color = "white", fill = "red")
+```
+
+```{r}
+weather_df |>
+   ggplot(aes( x= tmin, fill = name)) +
+  geom_histogram()
+```
+
+```{r}
+weather_df |>
+   ggplot(aes( x= tmin, fill = name)) +
+  geom_histogram() +
+  facet_grid(name ~.)
+```
+Maybe a density plot
+frequency/ total count
+```{r}
+weather_df |>
+   ggplot(aes( x= tmin, fill = name)) +
+  geom_density(alpha = 0.2) # adding alpha to show the transparebt overlap
+```
+ 
+boxplot
+```{r}
+weather_df |>
+  ggplot(aes( x = name, y = tmin))+
+  geom_boxplot(aes(fill = name))
+```
+Violin plot
+
+```{r}
+weather_df |>
+  ggplot(aes( x = name, y = tmin, fill = name))+
+  geom_violin()
+```
+ Ridge plot
+```{r}
+weather_df |>
+  ggplot ( aes(x = tmin, y = name, fill = name)) +
+  geom_density_ridges()
+```
+```{r}
+weather_df |>
+  ggplot(aes(x = prcp, fill = name)) +
+  geom_density(alpha = 0.2)
+
+# try the histogram
+weather_df |>
+  ggplot(aes(x = prcp, fill = name)) +
+  geom_histogram () +
+  facet_grid( name ~ .)
+ # only looking at a range of prcp 
+weather_df |>
+  filter (prcp>5, prcp <1000) |>
+  ggplot(aes( x = prcp, fill = name)) +
+  geom_density(alpha = 0.2)
+ # try to log the data
+weather_df |>
+  mutate( 
+    log_prcp = log(prcp)
+    ) |>
+  ggplot(aes(x = log_prcp, fill = name)) +
+  geom_density () +
+  facet_grid( name ~ .)
+```
+ saving plots
+```{r}
+ggp_weather_violin = 
+  weather_df |>
+  ggplot(aes( x = name, y = tmin, fill = name))+
+  geom_violin()
+ggsave( "plot/violine_plot.pdf", ggp_weather_violin, width = 8 , height = 6)
+```
+ 
