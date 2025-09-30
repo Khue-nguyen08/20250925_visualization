@@ -1,0 +1,96 @@
+---
+title: "Viz 1"
+output: github_document
+---
+
+```{r setup , include = FALSE}
+library(tidyverse)
+library(ggridges)
+devtools::install_github("p8105/p8105.datasets")
+
+library(p8105.datasets)
+#library(readxl)
+#library(haven)
+```
+
+```{r}
+library(p8105.datasets)
+data("weather_df")
+```
+
+```{r}
+ggp_weather_scatterplot = 
+  weather_df |>
+ggplot( aes(x = tmin, y = tmax)) + 
+  geom_point()
+ggp_weather_scatterplot
+```
+
+```{r}
+weather_df |>
+  filter(is.na(tmax))
+```
+## Fancier scatterplots
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth( se = FALSE) # se to not show the standard error
+```
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name), alpha = 0.3, size = 0.6) +
+  geom_smooth( se = FALSE) # se to not show the standard error
+
+
+```
+
+Adding the size inside the aes usign the precipitation data
+
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name, size = prcp), alpha = 0.3) +
+  geom_smooth( se = FALSE) # 
+```
+ Use facetting real quick
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax)) +
+  geom_point(aes(color = name), alpha = 0.3, size = 0.8) +
+  geom_smooth( se = FALSE) + # se to not show the standard error
+  #facet_grid(. ~ name) # name by columns
+  facet_grid(name ~.) # name by row, nothing in column but three rows
+
+```
+ Let's make it more fun
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name)) +
+  geom_point(aes(size = prcp), alpha = 0.3) +
+  geom_smooth( se = FALSE) +
+  facet_grid(.~ name )
+```
+ Add shape = name
+```{r}
+weather_df |>
+  ggplot(aes(x = tmin, y = tmax, color = name, shape = name)) +
+  geom_point(aes(size = prcp), alpha = 0.3) +
+  geom_smooth( se = FALSE) +
+  facet_grid(.~ name )
+```
+ Learning assessment
+```{r}
+weather_df |>
+  filter (name == "CentralPark_NY") |>
+  mutate (
+    tmax_fahr = tmax * (9/5) + 32,
+    tmin_fahr = tmin * (9/5) *32
+  ) |>
+  ggplot(aes(x = tmin_fahr, y = tmax_fahr)) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(se = FALSE, method = "lm" )
+  
+```
+

@@ -1,0 +1,50 @@
+---
+title: "Viz 1"
+output: github_document
+---
+
+```{r setup , include = FALSE}
+library(tidyverse)
+library(ggridges)
+devtools::install_github("p8105/p8105.datasets")
+
+library(p8105.datasets)
+#library(readxl)
+#library(haven)
+```
+
+```{r}
+library(p8105.datasets)
+data("weather_df")
+```
+
+## Scales
+
+```{r}
+ggp_weather_scatterplot = 
+  weather_df |>
+ggplot( aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name), alpha = 0.5)+
+  labs (
+    x = "minimum daily temp",
+    y = "maximum daily temp",
+    title = "Temperature scatterplot",
+    caption = "Data from NOAA",
+    color = "Location"
+  ) + #label the x axis
+  scale_x_continuous(
+    breaks = c (-20, 0,25),
+    labels = c ("-20C", "0", "25")
+  ) +
+  scale_y_continuous(
+    trans = "sqrt"
+    #limits = c (10,30) # to zoom in, or can do filter command from the beginning 
+  ) +
+  #scale_color_hue(h = c(100,300))
+  viridis::scale_color_viridis(
+    discrete = TRUE
+  )
+ggp_weather_scatterplot
+```
+We can use the viridis color pallet
+
