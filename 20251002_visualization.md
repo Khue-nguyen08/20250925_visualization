@@ -249,7 +249,7 @@ weather_df |>
     names_from = name,
     values_from = mean_tmax
   ) |>
-  knitr::kable(digits = 2)
+  knitr::kable(digits = 2) # set the digits to show the number after the decimal point
 ```
 
     ## `summarise()` has grouped output by 'name'. You can override using the
@@ -281,3 +281,120 @@ weather_df |>
 | 2022-10-01 |          17.43 |      29.22 |        11.88 |
 | 2022-11-01 |          14.02 |      27.96 |         2.14 |
 | 2022-12-01 |           6.76 |      27.35 |        -0.46 |
+
+## Mutate with groups
+
+``` r
+weather_df |>
+  group_by(name) |>
+  mutate (
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    center_tmax = tmax - mean_tmax # to show the variation around the mean
+  )|>
+  ggplot(aes(x = date, y = center_tmax, color = name)) +
+  geom_point()
+```
+
+    ## Warning: Removed 17 rows containing missing values or values outside the scale range
+    ## (`geom_point()`).
+
+<img src="20251002_visualization_files/figure-gfm/unnamed-chunk-13-1.png" width="90%" />
+Look for the cold day.
+
+``` r
+weather_df |>
+  group_by(name, month) |>
+  mutate (
+    temp_rank = min_rank(desc(tmin)))|>
+  filter(temp_rank <2)
+```
+
+    ## # A tibble: 98 × 8
+    ## # Groups:   name, month [72]
+    ##    name           id          date        prcp  tmax  tmin month      temp_rank
+    ##    <chr>          <chr>       <date>     <dbl> <dbl> <dbl> <date>         <int>
+    ##  1 CentralPark_NY USW00094728 2021-01-14     0   9.4   3.9 2021-01-01         1
+    ##  2 CentralPark_NY USW00094728 2021-02-28    56   7.2   5   2021-02-01         1
+    ##  3 CentralPark_NY USW00094728 2021-03-12     0  20    11.1 2021-03-01         1
+    ##  4 CentralPark_NY USW00094728 2021-03-26    48  27.8  11.1 2021-03-01         1
+    ##  5 CentralPark_NY USW00094728 2021-04-29     5  23.9  15   2021-04-01         1
+    ##  6 CentralPark_NY USW00094728 2021-05-23     0  31.1  20   2021-05-01         1
+    ##  7 CentralPark_NY USW00094728 2021-06-29     0  35    25.6 2021-06-01         1
+    ##  8 CentralPark_NY USW00094728 2021-07-16     0  32.8  26.1 2021-07-01         1
+    ##  9 CentralPark_NY USW00094728 2021-08-13     0  34.4  25.6 2021-08-01         1
+    ## 10 CentralPark_NY USW00094728 2021-08-26     0  32.8  25.6 2021-08-01         1
+    ## # ℹ 88 more rows
+
+What about lags
+
+``` r
+weather_df |>
+  group_by(name) %>% 
+  mutate (lagged_tmax = lag(tmax)) %>% view()
+```
+
+Use the variable you created
+
+``` r
+weather_df |>
+  group_by(name) %>% 
+  mutate (
+    temp_change =tmax - lag(tmax)
+  ) %>% 
+  summarize(
+    sd_tmax_change = sd(temp_change, na.rm = TRUE),
+    tmax_change_max = max (temp_change, na.rm = TRUE)
+  )
+```
+
+    ## # A tibble: 3 × 3
+    ##   name           sd_tmax_change tmax_change_max
+    ##   <chr>                   <dbl>           <dbl>
+    ## 1 CentralPark_NY           4.43            12.2
+    ## 2 Molokai_HI               1.24             5.6
+    ## 3 Waterhole_WA             3.04            11.1
+
+Find out which day
+
+``` r
+weather_df |>
+  group_by(name) %>% 
+  mutate (
+    temp_change =tmax - lag(tmax),
+    change_rank = min_rank(desc(temp_change))
+  ) |>
+  filter(
+    change_rank <2
+  )
+```
+
+    ## # A tibble: 4 × 9
+    ## # Groups:   name [3]
+    ##   name     id    date        prcp  tmax  tmin month      temp_change change_rank
+    ##   <chr>    <chr> <date>     <dbl> <dbl> <dbl> <date>           <dbl>       <int>
+    ## 1 Central… USW0… 2022-03-06    15  20     6.1 2022-03-01        12.2           1
+    ## 2 Molokai… USW0… 2021-01-19     0  27.8  21.1 2021-01-01         5.6           1
+    ## 3 Molokai… USW0… 2022-11-29     0  27.8  19.4 2022-11-01         5.6           1
+    ## 4 Waterho… USS0… 2022-12-22    76   1.5 -17.2 2022-12-01        11.1           1
+
+Same as above without creating the new variable
+
+``` r
+weather_df |>
+  group_by(name) %>% 
+  mutate (
+    temp_change =tmax - lag(tmax),
+     ) |>
+  filter(
+    min_rank(desc(temp_change)) <2
+  )
+```
+
+    ## # A tibble: 4 × 8
+    ## # Groups:   name [3]
+    ##   name           id          date        prcp  tmax  tmin month      temp_change
+    ##   <chr>          <chr>       <date>     <dbl> <dbl> <dbl> <date>           <dbl>
+    ## 1 CentralPark_NY USW00094728 2022-03-06    15  20     6.1 2022-03-01        12.2
+    ## 2 Molokai_HI     USW00022534 2021-01-19     0  27.8  21.1 2021-01-01         5.6
+    ## 3 Molokai_HI     USW00022534 2022-11-29     0  27.8  19.4 2022-11-01         5.6
+    ## 4 Waterhole_WA   USS0023B17S 2022-12-22    76   1.5 -17.2 2022-12-01        11.1

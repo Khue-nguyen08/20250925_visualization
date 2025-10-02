@@ -144,6 +144,71 @@ weather_df |>
     names_from = name,
     values_from = mean_tmax
   ) |>
-  knitr::kable(digits = 2)
+  knitr::kable(digits = 2) # set the digits to show the number after the decimal point
+```
+
+## Mutate with groups
+```{r}
+weather_df |>
+  group_by(name) |>
+  mutate (
+    mean_tmax = mean(tmax, na.rm = TRUE),
+    center_tmax = tmax - mean_tmax # to show the variation around the mean
+  )|>
+  ggplot(aes(x = date, y = center_tmax, color = name)) +
+  geom_point()
+```
+Look for the cold day.
+```{r}
+weather_df |>
+  group_by(name, month) |>
+  mutate (
+    temp_rank = min_rank(desc(tmin)))|>
+  filter(temp_rank <2)
+
+```
+
+What about lags
+
+```{r}
+weather_df |>
+  group_by(name) %>% 
+  mutate (lagged_tmax = lag(tmax)) %>% view()
+```
+
+Use the variable you created
+```{r}
+weather_df |>
+  group_by(name) %>% 
+  mutate (
+    temp_change =tmax - lag(tmax)
+  ) %>% 
+  summarize(
+    sd_tmax_change = sd(temp_change, na.rm = TRUE),
+    tmax_change_max = max (temp_change, na.rm = TRUE)
+  )
+```
+ Find out which day
+```{r}
+weather_df |>
+  group_by(name) %>% 
+  mutate (
+    temp_change =tmax - lag(tmax),
+    change_rank = min_rank(desc(temp_change))
+  ) |>
+  filter(
+    change_rank <2
+  )
+```
+Same as above without creating the new variable
+```{r}
+weather_df |>
+  group_by(name) %>% 
+  mutate (
+    temp_change =tmax - lag(tmax),
+     ) |>
+  filter(
+    min_rank(desc(temp_change)) <2
+  )
 ```
 
